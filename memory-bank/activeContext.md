@@ -4,7 +4,28 @@
 READY FOR NEXT TASK
 
 ## Current Task
-None - Previous task (BQ-001) archived and complete
+None - Previous task (BQ-002) archived
+
+## Previous Task (BQ-002) - ARCHIVED ✅
+**Task ID**: BQ-002  
+**Title**: Add Unique Request ID to Log Records  
+**Status**: ✅ ARCHIVED  
+**Complexity**: Level 2 - Simple Enhancement  
+**Archive**: `memory-bank/archive/archive-BQ-002.md`
+
+## Task Summary
+Successfully implemented automatic request ID tracking using Python's contextvars module. Every extraction request now receives a unique UUID4 that is included in all log messages throughout the request lifecycle.
+
+### Implementation Highlights
+- ✅ Modified `src/logger.py` to add contextvars-based request ID propagation
+- ✅ Updated `main.py` to generate and set request ID at entry point
+- ✅ Created 12 comprehensive unit tests (all passing)
+- ✅ Full test suite: 82/82 tests passing
+- ✅ Updated README.md with request tracking documentation
+- ✅ Zero breaking changes, fully backward compatible
+
+## Next Task
+Available for assignment - use `/van` command to start
 
 ## Status
 ✅ Task BQ-001 Complete - Archived

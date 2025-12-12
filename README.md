@@ -10,7 +10,8 @@ Python 3.13 script for extracting historical stock quotes from Google BigQuery w
   - **NEIGHBORHOOD**: Retrieve N records before and after a timestamp
 - **Adaptive Time Windows**: Automatically calculates optimal query windows based on timeframe
 - **Exponential Backoff**: Configurable retry logic for BigQuery API calls
-- **Structured Logging**: JSON-formatted logs for observability
+- **Structured Logging**: JSON-formatted logs for observability with automatic request ID tracking
+- **Request Correlation**: Every extraction receives a unique request ID included in all log messages
 - **Flexible Output**: JSON files with customizable naming
 
 ## Requirements
@@ -90,6 +91,38 @@ Output file: `{symbol}_{timeframe}_{start_timestamp}.json`
   }
 ]
 ```
+
+## Request Tracking
+
+Each extraction request automatically receives a unique request ID (UUID4) that is included in all log messages. This enables:
+- **Request Correlation**: Track all log entries for a specific extraction
+- **Distributed Tracing**: Correlate logs across systems
+- **Debugging**: Quickly identify all logs related to a failed request
+
+### Example Log Output with Request ID
+
+```json
+{
+  "timestamp": "2025-12-12T10:30:00.123456Z",
+  "level": "INFO",
+  "logger": "bq-stock-extractor",
+  "message": "Starting BigQuery extraction in ALL mode",
+  "request_id": "a3b8c9d7-e4f5-4a6b-8c9d-7e8f9a0b1c2d",
+  "labels": {
+    "service": "bq-stock-extractor",
+    "environment": "development",
+    "symbol": "BTCUSDT",
+    "timeframe": "1d",
+    "mode": "ALL"
+  },
+  "fields": {
+    "exchange": null,
+    "output_dir": "."
+  }
+}
+```
+
+The same `request_id` will appear in all subsequent log messages for that extraction, making it easy to filter and correlate logs in log aggregation systems like Loki, Elasticsearch, or CloudWatch.
 
 ## Backoff Configuration
 

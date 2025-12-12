@@ -3,13 +3,24 @@ Structured logging module for BigQuery Stock Quotes Extractor.
 
 Provides JSON-formatted logging similar to existing project patterns,
 but without Loki integration (deferred to future stages).
+
+Supports request ID tracking using contextvars for distributed tracing.
 """
 
+import contextvars
 import json
 import logging
 import sys
+import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
+
+# Context variable for request ID tracking
+# This allows request ID to propagate through the call stack automatically
+request_id_var: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar(
+    'request_id',
+    default=None
+)
 
 
 class StructuredFormatter(logging.Formatter):
@@ -30,6 +41,11 @@ class StructuredFormatter(logging.Formatter):
             "logger": record.name,
             "message": record.getMessage(),
         }
+        
+        # Add request ID from context if present
+        request_id = request_id_var.get()
+        if request_id:
+            log_data["request_id"] = request_id
         
         # Add extra fields if present
         if hasattr(record, "labels"):
@@ -116,6 +132,51 @@ def log_struct(
             "fields": fields or {},
         }
     )
+
+
+def set_request_id(request_id: Optional[str] = None) -> str:
+    """Set request ID in context for log correlation.
+    
+    If no request_id is provided, a new UUID4 will be generated.
+    The request ID will be automatically included in all subsequent log messages.
+    
+    Args:
+        request_id: Request ID to set (if None, generates new UUID4)
+    
+    Returns:
+        The request ID that was set
+    
+    Example:
+        >>> request_id = set_request_id()
+        >>> # All logs from this point will include this request_id
+    """
+    if request_id is None:
+        request_id = str(uuid.uuid4())
+    
+    request_id_var.set(request_id)
+    return request_id
+
+
+def get_request_id() -> Optional[str]:
+    """Get current request ID from context.
+    
+    Returns:
+        Current request ID, or None if not set
+    
+    Example:
+        >>> set_request_id("my-request-123")
+        >>> get_request_id()
+        'my-request-123'
+    """
+    return request_id_var.get()
+
+
+def clear_request_id() -> None:
+    """Clear request ID from context.
+    
+    Useful for cleanup or testing scenarios.
+    """
+    request_id_var.set(None)
 
 
 def env_labels() -> Dict[str, str]:

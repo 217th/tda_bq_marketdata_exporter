@@ -1,11 +1,98 @@
 # Tasks: BigQuery Stock Quotes Extractor
 
-## Task Overview
+## Current Task
+None - Previous task (BQ-002) archived and complete
+
+## Last Completed Task
+**Task ID**: BQ-002
+**Title**: Add Unique Request ID to Log Records
+**Status**: ✅ COMPLETE (ARCHIVED)
+**Complexity Level**: Level 2 - Simple Enhancement
+**Created**: 2025-12-12
+**Completed**: 2025-12-12
+**Archived**: 2025-12-12
+**Duration**: ~75 minutes
+**Archive Location**: `memory-bank/archive/archive-BQ-002.md`
+
+## Previous Task
 **Task ID**: BQ-001
 **Title**: Python 3.13 Script for BigQuery Historical Stock Quotes Extraction
 **Status**: ✅ COMPLETE (Archived)
 **Complexity Level**: Level 3 - Intermediate Feature
 **Archive Location**: `memory-bank/archive/archive-BQ-001.md`
+
+---
+
+# Task BQ-002: Add Unique Request ID to Log Records ✅
+
+## Task Description
+Each extraction request should receive a unique ID, and this ID should be included in all log records during its execution. This will enable request tracing and correlation of log entries.
+
+## Requirements
+1. ✅ Generate unique request ID at the start of each extraction
+2. ✅ Include request_id in all log messages throughout execution
+3. ✅ Request ID should be:
+   - ✅ Unique (UUID4)
+   - ✅ Human-readable format
+   - ✅ Included in structured log output
+4. ✅ Minimal changes to existing code (use context propagation)
+
+## Implementation Summary
+
+### Changes Made
+1. **src/logger.py** (Enhanced):
+   - Added `contextvars` for request ID propagation
+   - Created `set_request_id()`, `get_request_id()`, `clear_request_id()` functions
+   - Modified `StructuredFormatter` to include request_id automatically
+   - Backward compatible design
+
+2. **main.py** (Enhanced):
+   - Added UUID generation and request ID initialization
+   - Request ID set at application entry point
+   - Automatic propagation to all log messages
+
+3. **tests/test_request_id.py** (New):
+   - 12 comprehensive unit tests
+   - Context management tests
+   - Formatter integration tests
+   - End-to-end scenarios
+
+4. **README.md** (Updated):
+   - Added "Request Tracking" section
+   - Example log output with request_id
+   - Use cases and benefits documented
+
+### Test Results
+- **New Tests**: 12/12 passing
+- **Total Tests**: 82/82 passing
+- **Coverage**: 100% of new code
+- **Linter Errors**: 0
+- **Breaking Changes**: 0
+
+### Success Metrics
+- ✅ Every log message includes request_id when set
+- ✅ Request ID unique per execution (UUID4)
+- ✅ Request ID consistent across all logs
+- ✅ Backward compatible (works without request_id)
+- ✅ All tests passing
+- ✅ Documentation complete
+
+## Complexity Determination
+
+### Assessment Criteria:
+- **Scope**: Limited (logging module + main entry point)
+- **Design Decisions**: Minimal (UUID generation, context threading)
+- **Risk**: Low (additive change, no breaking modifications)
+- **Implementation**: ~75 minutes (as estimated)
+
+### Determination: Level 2 - Simple Enhancement
+
+## Reflection Document
+See: `memory-bank/reflection/reflection-BQ-002.md` for comprehensive analysis
+
+---
+
+# Task BQ-001: BigQuery Extractor (ARCHIVED)
 
 ## Complexity Determination
 

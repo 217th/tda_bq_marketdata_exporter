@@ -12,7 +12,7 @@ from datetime import datetime
 from pathlib import Path
 
 from src.config import load_config
-from src.logger import build_logger, log_struct
+from src.logger import build_logger, log_struct, set_request_id
 from src.query_builder import QueryBuilder
 from src.bigquery_client import BigQueryClient
 from src.output_handler import OutputHandler
@@ -214,6 +214,9 @@ def main():
         level="INFO",
     )
     
+    # Generate unique request ID for this extraction
+    request_id = set_request_id()
+    
     try:
         # Validate arguments and determine query mode
         query_mode = validate_args(args)
@@ -230,6 +233,7 @@ def main():
             fields={
                 "exchange": args.exchange,
                 "output_dir": args.output,
+                "request_id": request_id,
             }
         )
         

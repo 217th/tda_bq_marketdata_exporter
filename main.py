@@ -18,6 +18,7 @@ from src.bigquery_client import BigQueryClient
 from src.output_handler import OutputHandler
 from src.query_helpers import validate_symbol_format, validate_timeframe
 from src.exceptions import BQExtractorError, ValidationError, DataNotFoundError
+from src.gcs_handler import GCSHandler
 
 
 def parse_timestamp(ts_str: str) -> datetime:
@@ -89,8 +90,8 @@ Examples:
     )
     parser.add_argument(
         '--output', '-o',
-        default='.',
-        help='Output directory (default: current directory)'
+        default=None,
+        help='Output directory (if not specified, uploads to GCS bucket if configured)'
     )
     
     # Query mode: ALL
@@ -240,10 +241,45 @@ def main():
         # Load configuration
         config = load_config()
         
+        # Initialize GCS handler if configured
+        gcs_handler = None
+        if config.gcs_enabled:
+            try:
+                gcs_handler = GCSHandler(
+                    bucket_name=config.gcs_bucket_name,
+                    credentials_path=config.gcs_service_account_key_path,
+                    logger=logger
+                )
+                log_struct(
+                    logger,
+                    "INFO",
+                    "GCS handler initialized successfully",
+                    labels={"bucket": config.gcs_bucket_name},
+                    fields={}
+                )
+            except Exception as exc:
+                # Log warning but continue with local-only mode
+                log_struct(
+                    logger,
+                    "WARNING",
+                    f"GCS unavailable, using local storage only: {exc}",
+                    labels={},
+                    fields={"error": str(exc), "error_type": type(exc).__name__}
+                )
+                gcs_handler = None
+        else:
+            log_struct(
+                logger,
+                "INFO",
+                "GCS not configured, using local storage only",
+                labels={},
+                fields={}
+            )
+        
         # Initialize components
         query_builder = QueryBuilder(config.bq_table_fqn)
         bq_client = BigQueryClient(config, logger)
-        output_handler = OutputHandler(logger)
+        output_handler = OutputHandler(logger, gcs_handler=gcs_handler)
         
         # Build query based on mode
         if query_mode == 'ALL':
@@ -331,33 +367,64 @@ def main():
             }
         # ALL mode has no parameters (empty dict already set)
         
-        # Save to file with metadata
-        output_path = Path(args.output)
-        file_path = output_handler.save_to_file(
+        # Determine storage destination
+        # If --output is None (not provided), use GCS if available
+        # If --output is provided (any path), use local storage
+        use_gcs = args.output is None and gcs_handler is not None
+        
+        # Set output_path for local storage (fallback to current directory)
+        output_path = Path(args.output) if args.output else Path('.')
+        
+        # Save to file with metadata (GCS or local)
+        file_path, gcs_url = output_handler.save_to_file(
             transformed_data,
             output_path,
             args.symbol,
             args.timeframe,
             metadata=metadata,
+            use_gcs=use_gcs,
         )
         
-        # Success
-        log_struct(
-            logger,
-            "INFO",
-            f"Extraction completed successfully: {file_path}",
-            labels={
-                "symbol": args.symbol,
-                "timeframe": args.timeframe,
-            },
-            fields={
-                "file_path": str(file_path),
-                "record_count": len(transformed_data),
-            }
-        )
-        
-        print(f"Success! Data saved to: {file_path}")
-        print(f"Records: {len(transformed_data)}")
+        # Success - different messages for GCS vs local
+        if gcs_url:
+            log_struct(
+                logger,
+                "INFO",
+                f"Extraction completed successfully: {gcs_url}",
+                labels={
+                    "symbol": args.symbol,
+                    "timeframe": args.timeframe,
+                    "storage": "gcs",
+                },
+                fields={
+                    "gcs_url": gcs_url,
+                    "record_count": len(transformed_data),
+                    "request_id": request_id,
+                }
+            )
+            
+            print(f"✅ Success! Data uploaded to GCS:")
+            print(f"   Download URL: {gcs_url}")
+            print(f"   Records: {len(transformed_data)}")
+        else:
+            log_struct(
+                logger,
+                "INFO",
+                f"Extraction completed successfully: {file_path}",
+                labels={
+                    "symbol": args.symbol,
+                    "timeframe": args.timeframe,
+                    "storage": "local",
+                },
+                fields={
+                    "file_path": str(file_path),
+                    "record_count": len(transformed_data),
+                }
+            )
+            
+            print(f"✅ Success! Data saved locally:")
+            print(f"   File: {file_path}")
+            print(f"   Records: {len(transformed_data)}")
         
         # Close client
         bq_client.close()

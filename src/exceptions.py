@@ -136,3 +136,25 @@ class DataNotFoundError(BQExtractorError):
     DEFAULT_EXIT_CODE = 0
     DEFAULT_RETRYABLE = False
 
+
+class GCSUploadError(BQExtractorError):
+    """Error during GCS upload operation.
+    
+    Exit code: 5
+    Retryable: Yes (network issues can be transient)
+    """
+    
+    DEFAULT_EXIT_CODE = 5
+    DEFAULT_RETRYABLE = True
+
+
+class GCSAuthenticationError(BQExtractorError):
+    """GCS authentication/authorization failure.
+    
+    Exit code: 6
+    Retryable: No (requires credential fix)
+    """
+    
+    DEFAULT_EXIT_CODE = 6
+    DEFAULT_RETRYABLE = False
+

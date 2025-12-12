@@ -83,30 +83,40 @@ class TestOutputHandler:
         assert "extra_field" not in transformed[0]
         assert "another_field" not in transformed[0]
     
-    def test_generate_filename(self, handler):
-        """Test filename generation."""
-        filename = handler.generate_filename(
-            "BTCUSDT",
-            "1d",
-            datetime(2024, 6, 15, 12, 30, 45)
-        )
+    def test_generate_filename(self, handler, mocker):
+        """Test filename generation uses request_id format."""
+        # Mock get_request_id to return a known value
+        mocker.patch('src.output_handler.get_request_id', return_value='test-request-123')
         
-        assert filename == "BTCUSDT_1d_20240615_123045.json"
+        # The filename is now generated based on request_id
+        # We can verify this by checking the saved file
+        data = [{"date": "2024-01-01T00:00:00Z", "open": 100, "high": 110, "low": 90, "close": 105, "volume": 1000}]
+        
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = Path(tmp_dir)
+            file_path, gcs_url = handler.save_to_file(data, tmp_path, "BTCUSDT", "1d")
+            
+            # Filename should be request_id.json
+            assert file_path.name == "test-request-123.json"
+            assert gcs_url is None  # No GCS handler provided
     
     def test_save_to_file(self, handler, sample_rows, tmp_path):
         """Test saving data to file without metadata (backward compatible)."""
         transformed = handler.transform_results(sample_rows)
         
-        file_path = handler.save_to_file(
+        file_path, gcs_url = handler.save_to_file(
             transformed,
             tmp_path,
             "BTCUSDT",
             "1d"
         )
         
-        # Check file exists
+        # Check file exists and no GCS URL (local save)
         assert file_path.exists()
         assert file_path.suffix == ".json"
+        assert gcs_url is None
         
         # Check file content (without metadata, should be just array)
         with open(file_path, 'r') as f:
@@ -131,20 +141,22 @@ class TestOutputHandler:
             }
         ]
         
-        file_path = handler.save_to_file(data, output_dir, "BTCUSDT", "1d")
+        file_path, gcs_url = handler.save_to_file(data, output_dir, "BTCUSDT", "1d")
         
         # Directory should be created
         assert output_dir.exists()
         assert file_path.exists()
+        assert gcs_url is None
     
     def test_save_to_file_empty_data(self, handler, tmp_path):
         """Test saving empty data (no records)."""
         data = []
         
-        file_path = handler.save_to_file(data, tmp_path, "BTCUSDT", "1d")
+        file_path, gcs_url = handler.save_to_file(data, tmp_path, "BTCUSDT", "1d")
         
         # File should be created with empty array
         assert file_path.exists()
+        assert gcs_url is None
         
         with open(file_path, 'r') as f:
             loaded_data = json.load(f)
@@ -183,7 +195,7 @@ class TestOutputHandler:
             "query_parameters": {}
         }
         
-        file_path = handler.save_to_file(
+        file_path, gcs_url = handler.save_to_file(
             transformed,
             tmp_path,
             "BTCUSDT",
@@ -191,8 +203,9 @@ class TestOutputHandler:
             metadata=metadata
         )
         
-        # Check file exists
+        # Check file exists and no GCS URL
         assert file_path.exists()
+        assert gcs_url is None
         
         # Check file content with metadata
         with open(file_path, 'r') as f:
@@ -238,13 +251,15 @@ class TestOutputHandler:
             }
         }
         
-        file_path = handler.save_to_file(
+        file_path, gcs_url = handler.save_to_file(
             data,
             tmp_path,
             "ETHUSDT",
             "1h",
             metadata=metadata
         )
+        
+        assert gcs_url is None
         
         with open(file_path, 'r') as f:
             loaded_data = json.load(f)
@@ -281,13 +296,15 @@ class TestOutputHandler:
             }
         }
         
-        file_path = handler.save_to_file(
+        file_path, gcs_url = handler.save_to_file(
             data,
             tmp_path,
             "BTCUSDT",
             "15",
             metadata=metadata
         )
+        
+        assert gcs_url is None
         
         with open(file_path, 'r') as f:
             loaded_data = json.load(f)

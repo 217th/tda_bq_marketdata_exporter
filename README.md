@@ -8,17 +8,20 @@ Python 3.13 script for extracting historical stock quotes from Google BigQuery w
   - **ALL**: Retrieve 15 years of historical data
   - **RANGE**: Retrieve data within a specific time range
   - **NEIGHBORHOOD**: Retrieve N records before and after a timestamp
+- **Cloud Storage Output**: Automatic upload to Google Cloud Storage with public download URLs
 - **Adaptive Time Windows**: Automatically calculates optimal query windows based on timeframe
 - **Exponential Backoff**: Configurable retry logic for BigQuery API calls
 - **Structured Logging**: JSON-formatted logs for observability with automatic request ID tracking
 - **Request Correlation**: Every extraction receives a unique request ID included in all log messages
-- **Flexible Output**: JSON files with customizable naming
+- **Flexible Output**: GCS bucket (default) or local filesystem (with `--output` flag)
 
 ## Requirements
 
 - Python 3.13+
 - Google Cloud Platform account with BigQuery access
-- Service account key JSON file
+- BigQuery service account key JSON file (for data queries)
+- Google Cloud Storage bucket (optional, for cloud output)
+- GCS service account key JSON file (optional, for cloud uploads)
 
 ## Installation
 
@@ -37,31 +40,81 @@ nano .env
 
 Edit `.env` file:
 
+### BigQuery Configuration (Required)
+
 ```env
 GCP_PROJECT_ID=your-project-id
 BQ_DATASET=your_dataset_name
 BQ_TABLE=your_table_name
-GCP_KEY_PATH=/path/to/service-account-key.json
+GCP_KEY_PATH=/path/to/bigquery-service-account-key.json
 SERVICE_NAME=bq-stock-extractor
 ENVIRONMENT=development
 LOG_LEVEL=INFO
 ```
 
-## Usage
+### Google Cloud Storage Configuration (Optional)
 
-### Query All Data (15 years)
-```bash
-python main.py --symbol BTCUSDT --timeframe 1d --all
+If you want output files automatically uploaded to GCS:
+
+```env
+GCS_BUCKET_NAME=your-bucket-name
+GCS_SERVICE_ACCOUNT_KEY=/path/to/gcs-service-account-key.json
 ```
 
-### Query Time Range
+**Important Notes:**
+- GCS service account must have `Storage Object Creator` and `Storage Object Viewer` roles
+- Bucket should have `allUsers` with `Storage Object Viewer` permission for public downloads
+- If GCS is not configured, files will be saved locally (same as using `--output` flag)
+
+## Usage
+
+### Output Modes
+
+**Default Mode (GCS Upload):**
+When GCS is configured and `--output` flag is NOT provided, the script uploads results to Google Cloud Storage:
+
+```bash
+# Upload to GCS bucket (default if GCS configured)
+python main.py --symbol BTCUSDT --timeframe 1d --all
+
+# Result:
+# ✅ Success! Data uploaded to GCS:
+#    Download URL: https://storage.googleapis.com/your-bucket/abc-123-def-456.json
+#    Records: 365
+```
+
+**Local Mode (Filesystem):**
+Use `--output` flag to save locally instead of GCS:
+
+```bash
+# Save to local filesystem
+python main.py --symbol BTCUSDT --timeframe 1d --all --output ./data/
+
+# Result:
+# ✅ Success! Data saved locally:
+#    File: ./data/abc-123-def-456.json
+#    Records: 365
+```
+
+### Query Examples
+
+#### Query All Data (15 years)
+```bash
+# To GCS (default if configured):
+python main.py --symbol BTCUSDT --timeframe 1d --all
+
+# To local filesystem:
+python main.py --symbol BTCUSDT --timeframe 1d --all --output ./data/
+```
+
+#### Query Time Range
 ```bash
 python main.py --symbol ETHUSDT --timeframe 1h \
   --from 2024-01-01T00:00:00Z \
   --to 2024-12-31T23:59:59Z
 ```
 
-### Query Neighborhood
+#### Query Neighborhood
 ```bash
 python main.py --symbol BTCUSDT --timeframe 15 \
   --timestamp 2024-06-15T12:00:00Z \
@@ -72,12 +125,19 @@ python main.py --symbol BTCUSDT --timeframe 15 \
 ### Optional Parameters
 ```bash
 --exchange BINANCE      # Specify exchange (optional)
---output ./data/        # Output directory (default: current)
+--output ./data/        # Save to local directory instead of GCS (optional)
 ```
 
 ## Output Format
 
-Output file: `{symbol}_{timeframe}_{start_timestamp}.json`
+### File Naming
+
+All output files use the same naming pattern:
+- **Filename**: `{request_id}.json` (e.g., `550e8400-e29b-41d4-a716-446655440000.json`)
+- **request_id**: Unique UUID4 generated for each extraction request
+- **Applies to**: Both GCS and local filesystem modes
+
+### JSON Structure
 
 The output JSON includes metadata about the request along with the OHLCV candle data:
 

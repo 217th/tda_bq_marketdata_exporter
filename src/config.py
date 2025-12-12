@@ -22,15 +22,34 @@ class Config:
     bq_table: str
     gcp_key_path: Path
     
+    # Google Cloud Storage (optional)
+    gcs_bucket_name: Optional[str] = None
+    gcs_service_account_key_path: Optional[Path] = None
+    
     # Application
-    service_name: str
-    environment: str
-    log_level: str
+    service_name: str = "bq-stock-extractor"
+    environment: str = "development"
+    log_level: str = "INFO"
     
     @property
     def bq_table_fqn(self) -> str:
         """Fully qualified BigQuery table name."""
         return f"{self.gcp_project_id}.{self.bq_dataset}.{self.bq_table}"
+    
+    @property
+    def gcs_enabled(self) -> bool:
+        """Check if GCS is properly configured and available.
+        
+        Returns:
+            True if GCS bucket name and service account key are configured
+            and the key file exists.
+        """
+        return (
+            self.gcs_bucket_name is not None
+            and self.gcs_bucket_name.strip() != ""
+            and self.gcs_service_account_key_path is not None
+            and self.gcs_service_account_key_path.exists()
+        )
     
     def validate(self) -> None:
         """Validate configuration values.
@@ -110,12 +129,19 @@ def load_config(env_file: Optional[Path] = None) -> Config:
             f"Please check your .env file."
         )
     
+    # Load optional GCS variables
+    gcs_bucket_name = os.getenv("GCS_BUCKET_NAME")
+    gcs_key_path_str = os.getenv("GCS_SERVICE_ACCOUNT_KEY")
+    gcs_key_path = Path(gcs_key_path_str) if gcs_key_path_str else None
+    
     # Create config with defaults for optional variables
     config = Config(
         gcp_project_id=os.getenv("GCP_PROJECT_ID", ""),
         bq_dataset=os.getenv("BQ_DATASET", ""),
         bq_table=os.getenv("BQ_TABLE", ""),
         gcp_key_path=Path(os.getenv("GCP_KEY_PATH", "")),
+        gcs_bucket_name=gcs_bucket_name,
+        gcs_service_account_key_path=gcs_key_path,
         service_name=os.getenv("SERVICE_NAME", "bq-stock-extractor"),
         environment=os.getenv("ENVIRONMENT", "development"),
         log_level=os.getenv("LOG_LEVEL", "INFO"),

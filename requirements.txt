@@ -4,6 +4,9 @@
 # Google Cloud BigQuery client
 google-cloud-bigquery>=3.25.0
 
+# Google Cloud Storage client
+google-cloud-storage>=2.10.0
+
 # Environment variable management
 python-dotenv>=1.0.0
 

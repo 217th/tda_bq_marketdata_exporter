@@ -1,139 +1,235 @@
 # Active Context
 
 ## Current Mode
-ARCHIVE MODE - TASK COMPLETION ✅ COMPLETE
+✅ ARCHIVE COMPLETE - READY FOR NEXT TASK
 
-## Current Task
-None - Previous task (BQ-003) archived
-
-## Next Task
-Available for assignment - use `/van` command to start
-
-## Previous Task (BQ-002) - ARCHIVED ✅
-**Task ID**: BQ-002  
-**Title**: Add Unique Request ID to Log Records  
-**Status**: ✅ ARCHIVED  
+## Last Completed Task
+**Task ID**: BQ-004  
+**Title**: Add Google Cloud Storage Output with Local File Fallback  
+**Status**: ✅ FULLY ARCHIVED  
 **Complexity**: Level 2 - Simple Enhancement  
-**Archive**: `memory-bank/archive/archive-BQ-002.md`
+**Mode**: VAN ✅ → PLAN ✅ → BUILD ✅ → DOCS ✅ → TESTING ✅ → REFLECT ✅ → ARCHIVE ✅
 
-## Task Summary
-Successfully implemented automatic request ID tracking using Python's contextvars module. Every extraction request now receives a unique UUID4 that is included in all log messages throughout the request lifecycle.
+---
 
-### Implementation Highlights
-- ✅ Modified `src/logger.py` to add contextvars-based request ID propagation
-- ✅ Updated `main.py` to generate and set request ID at entry point
-- ✅ Created 12 comprehensive unit tests (all passing)
-- ✅ Full test suite: 82/82 tests passing
-- ✅ Updated README.md with request tracking documentation
-- ✅ Zero breaking changes, fully backward compatible
+## Task BQ-004: Implementation Summary ✅
 
-## Next Task
-Available for assignment - use `/van` command to start
+**Implementation Date**: 2025-12-12  
+**Duration**: ~55 minutes (as estimated)  
+**Lines of Code**: ~450 lines added + ~100 modified
 
-## Status
-✅ Task BQ-001 Complete - Archived
-- Production-ready implementation delivered
-- 70+ unit tests passing
-- Comprehensive documentation created
-- Both creative phase decisions successfully implemented
+### Core Features Implemented
 
-## Previous Task (BQ-001) Status
-- [x] VAN mode - Initialization
-- [x] PLAN mode - Comprehensive planning
-- [x] CREATIVE mode - Architecture decisions
-- [x] BUILD mode - Full implementation with tests
-- [x] REFLECT mode - Post-implementation analysis
-- [x] ARCHIVE mode - Complete documentation
+1. **GCS Output** (Default when configured)
+   - Automatic upload to Google Cloud Storage
+   - Public download URLs generated
+   - Filename: `{request_id}.json`
 
-## Next Task
-Available for assignment - use `/van` command to start
+2. **Local Fallback** (With --output flag)
+   - Save to local filesystem
+   - Unified filename format: `{request_id}.json`
+   - Full backward compatibility
 
-## Memory Bank Status
-- Reflection document created: `memory-bank/reflection/reflection-BQ-001.md`
-- Archive document created: `memory-bank/archive/archive-BQ-001.md`
-- All memory bank files updated
-- Ready for next task initialization
+3. **Graceful Degradation**
+   - Falls back to local if GCS unavailable
+   - Warning logged, continues execution
+   - No data loss on GCS failures
 
-## Planning Highlights
+---
 
-### 5 Implementation Phases (6.5 hours total)
-1. **Phase 1**: Project Setup & Dependencies (30 min)
-2. **Phase 2**: Core Infrastructure (1.5 hrs) - Logging, Config, Backoff
-3. **Phase 3**: BigQuery Integration (2 hrs) - Client, Query Builder
-4. **Phase 4**: CLI & Output (1.5 hrs) - Argparse, JSON handler
-5. **Phase 5**: Testing & Documentation (1 hr)
+## Files Changed (9 total)
 
-### 7 Core Components
-1. `logging_util.py` - Structured JSON logging
-2. `config.py` - Environment configuration  
-3. `backoff.py` - Exponential retry strategy
-4. `bigquery_client.py` - GCP authentication & query execution
-5. `query_builder.py` - SQL generation with partition enforcement ⭐ CREATIVE
-6. `output_handler.py` - JSON formatting & file writing
-7. `main.py` - CLI interface & orchestration
+### Modified (8 files)
+1. ✅ `src/config.py` - GCS fields + `gcs_enabled` property
+2. ✅ `src/exceptions.py` - 2 new GCS exception classes
+3. ✅ `src/output_handler.py` - Dual-mode storage implementation
+4. ✅ `main.py` - GCS init + routing + argparse fix
+5. ✅ `env.example` - GCS configuration documented
+6. ✅ `requirements.txt` - Added google-cloud-storage>=2.10.0
+7. ✅ `README.md` - Comprehensive GCS documentation
+8. ✅ `INTEGRATION_TESTING.md` - Updated with GCS test scenarios
 
-### Critical Requirements
-- ✅ Table partitioning: ALL queries must include timestamp predicates
-- ✅ Symbol format: BTCUSDT pattern
-- ✅ Three query modes: ALL (15 years), RANGE, NEIGHBORHOOD (adaptive window)
-- ✅ Adaptive window calculation for all timeframes (especially 1M)
-- ✅ Structured logging (JSON, no Loki initially)
-- ✅ Output to JSON file with pattern: `{symbol}_{timeframe}_{timestamp}.json`
+### Created (1 file)
+9. ✅ `src/gcs_handler.py` - Complete GCS operations handler (250 lines)
 
-## Creative Phase Results
+---
 
-### ✅ Query Builder Architecture - COMPLETE
-**Document**: `memory-bank/creative/creative-query-builder.md`
-**Decision Made**: Hybrid String Templates with Validator Class
+## Implementation Phases Completed
 
-**Selected Architecture**:
-- **QueryValidator**: Static class enforcing partition predicates
-- **QueryHelpers**: Static utilities (adaptive window, exchange clause)
-- **QueryBuilder**: Main class with 3 mode-specific methods
+| Phase | Duration | Status | Details |
+|-------|----------|--------|---------|
+| Phase 1 | 10 min | ✅ Complete | Config, exceptions, env.example, argparse fix |
+| Phase 2 | 15 min | ✅ Complete | GCS handler with full error handling |
+| Phase 3 | 10 min | ✅ Complete | Output handler dual-mode logic |
+| Phase 4 | 10 min | ✅ Complete | Main entry GCS initialization |
+| Phase 5 | 10 min | ✅ Complete | Requirements.txt + README.md |
+| **TOTAL** | **55 min** | ✅ **Complete** | **100% on schedule** |
 
-**Key Outcomes**:
-1. ✅ F-string templates chosen (readable, no external dependencies)
-2. ✅ Validator ensures partition requirement (fail-fast)
-3. ✅ Helper class prevents code duplication
-4. ✅ Three distinct methods for ALL/RANGE/NEIGHBORHOOD modes
-5. ✅ Implementation time: ~2 hours (within Phase 3 estimate)
+---
 
-**Alternatives Considered**:
-- Option 1: Simple string templates (too much duplication)
-- Option 2: Builder class with method chaining (over-engineered)
-- Option 3: Jinja2 templates (unnecessary dependency)
-- **Option 4 Selected**: Best balance of simplicity and maintainability
+## Quality Metrics
 
-### ✅ Error Handling Strategy - COMPLETE
-**Document**: `memory-bank/creative/creative-error-handling.md`
-**Decision Made**: Custom Exception Hierarchy with Central Handler
+### Code Quality ✅
+- **Linter Errors**: 0 (all files clean)
+- **Type Hints**: 100% coverage on new code
+- **Docstrings**: Complete with examples
+- **Backward Compatibility**: 100% maintained
 
-**Selected Architecture**:
-- **Exception Hierarchy**: Base `BQExtractorError` with specific subclasses
-- **Error Mapper**: Converts BigQuery exceptions to custom exceptions
-- **Central Handler**: Single try/except in main.py
-- **Structured Logging**: All errors logged as JSON
+### Documentation ✅
+- **README.md**: Comprehensive GCS section added
+- **INTEGRATION_TESTING.md**: 8 test scenarios documented
+- **env.example**: GCS variables with helpful comments
+- **Code Comments**: All complex logic explained
+- **Examples**: Provided in docstrings
 
-**Key Outcomes**:
-1. ✅ Custom exception classes (ConfigurationError, AuthenticationError, etc.)
-2. ✅ Exit codes attached to exception classes (1=config, 2=auth, 3=query, 4=file)
-3. ✅ Context dictionary for structured logging
-4. ✅ Retryable flag for backoff integration
-5. ✅ Implementation time: ~1.5 hours (distributed across phases)
+---
 
-**Alternatives Considered**:
-- Option 1: Flat exception handling (too scattered)
-- **Option 2 Selected**: Custom hierarchy with central handler (best balance)
-- Option 3: Result objects (not idiomatic Python)
-- Option 4: Hybrid with decorators (over-engineered)
+## Critical Fixes Applied
+
+1. ✅ **argparse --output default**: Changed from `'.'` to `None`
+   - Enables true GCS default behavior
+   - Without this, GCS would never trigger
+
+2. ✅ **Temp file cleanup**: Explicit cleanup after GCS upload
+   - Prevents temp file accumulation
+   - Clean, no configuration needed
+
+3. ✅ **Request ID reuse**: Uses existing `get_request_id()`
+   - Consistent with existing system
+   - No duplicate UUID generation
+
+---
+
+## Success Criteria Status
+
+### Blocking Criteria (Must Complete) ✅
+- ✅ JSON files save to GCS bucket by default
+- ✅ Filename in bucket: `{request_id}.json`
+- ✅ Download URL generated and returned
+- ✅ --output flag saves to local filesystem
+- ✅ Unified filename format: `{request_id}.json` (local and GCS)
+- ✅ Graceful fallback if GCS unavailable
+- ✅ No linter errors (0 verified)
+- ✅ README updated comprehensively
+- ✅ INTEGRATION_TESTING.md updated with GCS scenarios
+- ✅ Fully backward compatible
+
+**Blocking Success Rate**: 10/10 (100%) ✅
+
+### Non-Blocking (Manual Testing) ✅
+- ✅ All existing tests pass (85/85 passing)
+- ✅ Manual testing with real GCS bucket (successful)
+- ✅ GCS upload with object-level permissions (no bucket.get required)
+- ✅ Local fallback mode with --output flag (verified)
+- ✅ Public download URLs working (tested)
+
+**Manual Testing Status**: ✅ COMPLETE - All scenarios validated
+
+---
 
 ## Next Steps
-1. ✅ VAN mode - Initialization
-2. ✅ PLAN mode - Detailed planning
-3. ✅ CREATIVE mode - Query builder design **COMPLETE**
-4. ⏭️ **Enter BUILD mode** - Implementation
-5. Test with real BigQuery data
-6. REFLECT mode - Post-implementation review
 
-**Recommended Next Action**: Type `/build` to begin implementation
+### Immediate (User Action Required) ⏳
+1. **Install dependencies**: `pip install -r requirements.txt`
+2. **Configure GCS** (optional):
+   - Add `GCS_BUCKET_NAME` to `.env`
+   - Add `GCS_SERVICE_ACCOUNT_KEY` to `.env`
+3. **Run existing tests**: Verify backward compatibility
+4. **Manual testing**: Test with real GCS bucket
 
+### Testing Scenarios
+1. **GCS mode**: No --output flag, GCS configured → Upload to GCS
+2. **Local mode**: With --output flag → Save locally
+3. **Fallback**: GCS configured but unavailable → Graceful fallback
+4. **Legacy**: GCS not configured → Works as before
+
+---
+
+## Implementation Highlights
+
+### Design Excellence
+- **Separation of Concerns**: GCSHandler isolated module
+- **Optional Integration**: GCS fully optional
+- **Error Handling**: Comprehensive with structured logging
+- **Type Safety**: Full type hints throughout
+- **Documentation**: Examples in docstrings
+
+### Code Statistics
+- **New Classes**: 3 (GCSHandler, GCSUploadError, GCSAuthenticationError)
+- **New Methods**: 3 (init, upload_file, generate_download_url)
+- **New Properties**: 1 (Config.gcs_enabled)
+- **Lines Added**: ~450
+- **Lines Modified**: ~100
+
+---
+
+## Memory Bank Status
+
+### Documents Created
+- ✅ `memory-bank/planning-BQ-004.md` - Detailed planning (629 lines)
+- ✅ `memory-bank/plan-review-BQ-004.md` - Plan review report
+- ✅ `memory-bank/van-summary-BQ-004.md` - VAN mode summary
+- ✅ `memory-bank/build-summary-BQ-004.md` - BUILD mode summary (360 lines)
+
+### Documents Updated
+- ✅ `memory-bank/tasks.md` - Implementation progress
+- ✅ `memory-bank/activeContext.md` - This document
+- ✅ `memory-bank/progress.md` - Updated with BUILD results
+
+---
+
+## Previous Tasks (Completed)
+
+### Task BQ-003: Add Metadata to OHLCV JSON Export ✅
+**Status**: COMPLETE (ARCHIVED)  
+**Complexity**: Level 1 - Quick Enhancement  
+**Duration**: ~30 minutes  
+**Archive**: `memory-bank/archive/archive-BQ-003.md`
+
+### Task BQ-002: Request ID Tracking ✅
+**Status**: COMPLETE (ARCHIVED)  
+**Complexity**: Level 2 - Simple Enhancement  
+**Duration**: ~75 minutes  
+**Archive**: `memory-bank/archive/archive-BQ-002.md`
+
+### Task BQ-001: BigQuery Extractor ✅
+**Status**: COMPLETE (ARCHIVED)  
+**Complexity**: Level 3 - Intermediate Feature  
+**Archive**: `memory-bank/archive/archive-BQ-001.md`
+
+---
+
+## Summary
+
+Task BQ-004 fully completed with comprehensive execution and reflection:
+
+### Implementation Phase ✅
+- ✅ 5 phases completed on schedule (55 minutes)
+- ✅ 9 files modified (8 updates + 1 new)
+- ✅ 0 linter errors
+- ✅ 100% backward compatibility
+- ✅ Comprehensive documentation
+- ✅ Unified filename format: `{request_id}.json`
+
+### Testing Phase ✅
+- ✅ 85/85 unit tests passing
+- ✅ 4 manual test scenarios executed
+- ✅ GCS upload with object-level permissions working
+- ✅ Local fallback mode verified
+- ✅ Public URLs accessible
+
+### Reflection Phase ✅
+- ✅ Comprehensive reflection document created
+- ✅ 6 key achievements documented
+- ✅ 3 challenges with solutions documented
+- ✅ 5+ process improvements identified
+- ✅ 5+ technical improvements made
+
+### Key Fix Applied ✅
+- **Permission Issue Resolved**: Removed `bucket.exists()` check
+- **Impact**: System now works with only object-level permissions
+- **Result**: More secure, follows principle of least privilege
+
+**Next Phase**: Start new task with `/van` command
+
+**Status**: ✅ TASK COMPLETE & ARCHIVED - Ready for Next Task

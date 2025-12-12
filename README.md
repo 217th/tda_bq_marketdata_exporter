@@ -79,17 +79,62 @@ python main.py --symbol BTCUSDT --timeframe 15 \
 
 Output file: `{symbol}_{timeframe}_{start_timestamp}.json`
 
+The output JSON includes metadata about the request along with the OHLCV candle data:
+
 ```json
-[
-  {
-    "date": "2024-01-01T00:00:00Z",
-    "open": 42000.5,
-    "high": 42500.0,
-    "low": 41800.0,
-    "close": 42300.0,
-    "volume": 1234.56
-  }
-]
+{
+  "metadata": {
+    "request_id": "550e8400-e29b-41d4-a716-446655440000",
+    "request_timestamp": "2025-12-12T10:30:45Z",
+    "symbol": "BTCUSDT",
+    "timeframe": "1d",
+    "query_type": "all",
+    "query_parameters": {}
+  },
+  "data": [
+    {
+      "date": "2024-01-01T00:00:00Z",
+      "open": 42000.5,
+      "high": 42500.0,
+      "low": 41800.0,
+      "close": 42300.0,
+      "volume": 1234.56
+    }
+  ]
+}
+```
+
+### Metadata Fields
+
+- **request_id**: Unique identifier for this extraction request (UUID4)
+- **request_timestamp**: When the request was initiated (ISO 8601 format)
+- **symbol**: Stock symbol that was queried
+- **timeframe**: Timeframe value used in the query
+- **query_type**: Type of query executed (`all`, `range`, or `neighborhood`)
+- **query_parameters**: Query-specific parameters (varies by query type)
+
+### Query Parameters by Type
+
+**ALL Query** (no parameters):
+```json
+"query_parameters": {}
+```
+
+**RANGE Query**:
+```json
+"query_parameters": {
+  "from_timestamp": "2024-01-01T00:00:00Z",
+  "to_timestamp": "2024-12-31T23:59:59Z"
+}
+```
+
+**NEIGHBORHOOD Query**:
+```json
+"query_parameters": {
+  "center_timestamp": "2024-06-15T10:30:00Z",
+  "n_before": 10,
+  "n_after": 10
+}
 ```
 
 ## Request Tracking

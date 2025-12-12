@@ -12,7 +12,7 @@ from datetime import datetime
 from pathlib import Path
 
 from src.config import load_config
-from src.logger import build_logger, log_struct, set_request_id
+from src.logger import build_logger, log_struct, set_request_id, get_request_id
 from src.query_builder import QueryBuilder
 from src.bigquery_client import BigQueryClient
 from src.output_handler import OutputHandler
@@ -307,13 +307,38 @@ def main():
         # Transform results
         transformed_data = output_handler.transform_results(rows)
         
-        # Save to file
+        # Build metadata
+        metadata = {
+            "request_id": get_request_id() or "N/A",
+            "request_timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "symbol": args.symbol,
+            "timeframe": args.timeframe,
+            "query_type": query_mode.lower(),
+            "query_parameters": {}
+        }
+        
+        # Add query-specific parameters
+        if query_mode == 'RANGE':
+            metadata["query_parameters"] = {
+                "from_timestamp": args.from_timestamp,
+                "to_timestamp": args.to_timestamp,
+            }
+        elif query_mode == 'NEIGHBORHOOD':
+            metadata["query_parameters"] = {
+                "center_timestamp": args.center_timestamp,
+                "n_before": args.n_before,
+                "n_after": args.n_after,
+            }
+        # ALL mode has no parameters (empty dict already set)
+        
+        # Save to file with metadata
         output_path = Path(args.output)
         file_path = output_handler.save_to_file(
             transformed_data,
             output_path,
             args.symbol,
             args.timeframe,
+            metadata=metadata,
         )
         
         # Success

@@ -1,7 +1,18 @@
 # Tasks: BigQuery Stock Quotes Extractor
 
 ## Current Task
-None - Previous task (BQ-002) archived and complete
+None - Previous task (BQ-003) archived and complete
+
+## Last Completed Task
+**Task ID**: BQ-003
+**Title**: Add Metadata to OHLCV JSON Export
+**Status**: ✅ COMPLETE (ARCHIVED)
+**Complexity Level**: Level 1 - Quick Enhancement
+**Created**: 2025-12-12
+**Completed**: 2025-12-12
+**Archived**: 2025-12-12
+**Duration**: ~30 minutes (VAN: 5min, BUILD: 25min)
+**Archive Location**: `memory-bank/archive/archive-BQ-003.md`
 
 ## Last Completed Task
 **Task ID**: BQ-002

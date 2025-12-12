@@ -7,9 +7,9 @@ Output file naming: {symbol}_{timeframe}_{start_timestamp}.json
 
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 from .exceptions import FileSystemError
 
@@ -102,14 +102,16 @@ class OutputHandler:
         output_path: Path,
         symbol: str,
         timeframe: str,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> Path:
-        """Save transformed data to JSON file.
+        """Save transformed data to JSON file with optional metadata.
         
         Args:
             data: Transformed data to save
             output_path: Output directory path
             symbol: Stock symbol (for filename)
             timeframe: Timeframe (for filename)
+            metadata: Optional metadata dictionary to include in output
         
         Returns:
             Path to the saved file
@@ -120,7 +122,8 @@ class OutputHandler:
         Example:
             >>> handler = OutputHandler(logger)
             >>> data = [{"date": "2024-01-01T00:00:00Z", "open": 100, ...}]
-            >>> file_path = handler.save_to_file(data, Path("."), "BTCUSDT", "1d")
+            >>> metadata = {"request_id": "123", "symbol": "BTCUSDT", ...}
+            >>> file_path = handler.save_to_file(data, Path("."), "BTCUSDT", "1d", metadata)
         """
         try:
             # Ensure output directory exists
@@ -146,9 +149,20 @@ class OutputHandler:
             filename = self.generate_filename(symbol, timeframe, start_timestamp)
             file_path = output_path / filename
             
+            # Prepare output structure
+            if metadata:
+                # With metadata: wrap data in structure
+                output = {
+                    "metadata": metadata,
+                    "data": data
+                }
+            else:
+                # Without metadata: just the data array (backward compatible)
+                output = data
+            
             # Write JSON file
             with open(file_path, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
+                json.dump(output, f, indent=2, ensure_ascii=False)
             
             self.logger.info(
                 f"Output file saved: {file_path}",
@@ -161,6 +175,7 @@ class OutputHandler:
                         "file_path": str(file_path),
                         "record_count": len(data),
                         "file_size_bytes": file_path.stat().st_size,
+                        "has_metadata": metadata is not None,
                     },
                 }
             )
